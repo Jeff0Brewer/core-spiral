@@ -7,6 +7,8 @@ class CoreSpiral {
     program: WebGLProgram
     buffer: WebGLBuffer
     bindAttrib: () => void
+    setProj: (m: mat4) => void
+    setView: (m: mat4) => void
     numVertex: number
 
     constructor (gl: WebGLRenderingContext, numSegment: number, numRotation: number) {
@@ -44,51 +46,8 @@ class CoreSpiral {
 
         const projLoc = gl.getUniformLocation(this.program, 'proj')
         const viewLoc = gl.getUniformLocation(this.program, 'view')
-
-        const fov = Math.PI * 0.5
-        const near = 0.1
-        const far = 10
-        const proj = mat4.perspective(
-            mat4.create(),
-            fov,
-            window.innerWidth / window.innerHeight,
-            near,
-            far
-        )
-
-        window.addEventListener('resize', (): void => {
-            mat4.perspective(
-                proj,
-                fov,
-                window.innerWidth / window.innerHeight,
-                near,
-                far
-            )
-            gl.uniformMatrix4fv(projLoc, false, proj)
-            gl.viewport(
-                0,
-                0,
-                window.innerWidth * window.devicePixelRatio,
-                window.innerHeight * window.devicePixelRatio
-            )
-        })
-
-        const view = mat4.lookAt(
-            mat4.create(),
-            [0, 0, 2],
-            [0, 0, 0],
-            [0, 1, 0]
-        )
-
-        gl.uniformMatrix4fv(projLoc, false, proj)
-        gl.uniformMatrix4fv(viewLoc, false, view)
-
-        gl.viewport(
-            0,
-            0,
-            window.innerWidth * window.devicePixelRatio,
-            window.innerHeight * window.devicePixelRatio
-        )
+        this.setProj = (m: mat4): void => { gl.uniformMatrix4fv(projLoc, false, m) }
+        this.setView = (m: mat4): void => { gl.uniformMatrix4fv(viewLoc, false, m) }
     }
 
     draw (gl: WebGLRenderingContext): void {

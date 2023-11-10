@@ -46,8 +46,14 @@ class CoreSpiral {
 
         const projLoc = gl.getUniformLocation(this.program, 'proj')
         const viewLoc = gl.getUniformLocation(this.program, 'view')
-        this.setProj = (m: mat4): void => { gl.uniformMatrix4fv(projLoc, false, m) }
-        this.setView = (m: mat4): void => { gl.uniformMatrix4fv(viewLoc, false, m) }
+        this.setProj = (m: mat4): void => {
+            gl.useProgram(this.program)
+            gl.uniformMatrix4fv(projLoc, false, m)
+        }
+        this.setView = (m: mat4): void => {
+            gl.useProgram(this.program)
+            gl.uniformMatrix4fv(viewLoc, false, m)
+        }
     }
 
     draw (gl: WebGLRenderingContext): void {

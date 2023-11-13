@@ -4,6 +4,42 @@ import type { Metadata } from '../vis/vis'
 import vertSource from '../shaders/spiral-vert.glsl?raw'
 import fragSource from '../shaders/spiral-frag.glsl?raw'
 
+class TextureMapper {
+    columnWidth: number
+    columnBounds: Array<number>
+    columnHeights: Array<number>
+    totalHeight: number
+
+    constructor (metadata: Metadata) {
+        this.columnWidth = metadata.width
+        this.columnBounds = metadata.columnBounds
+        this.columnHeights = metadata.heights
+        this.totalHeight = this.columnHeights.reduce(
+            (total: number, curr: number) => total + curr,
+            0
+        )
+    }
+
+    get (t: number): { ind: number, coord: [number, number] } {
+        const tHeight = t * this.totalHeight
+
+        let colInd = 0
+        let colTotal = this.columnHeights[0]
+        while (colTotal < tHeight) {
+            colInd++
+            colTotal += this.columnHeights[colInd]
+        }
+
+        return {
+            ind: Math.floor(colInd * this.columnWidth),
+            coord: [
+                (colInd * this.columnWidth) % 1,
+                (this.columnHeights[colInd] - (colTotal - tHeight))
+            ]
+        }
+    }
+}
+
 class CoreSpiral {
     program: WebGLProgram
     buffer: WebGLBuffer
@@ -22,7 +58,6 @@ class CoreSpiral {
         numSegment: number
     ) {
         this.program = initProgram(gl, vertSource, fragSource)
-        console.log(metadata)
 
         this.textures = []
         this.texAttachments = getTextureAttachments(gl)
@@ -39,29 +74,36 @@ class CoreSpiral {
             )
         }
 
+        const texMapper = new TextureMapper(metadata)
         const maxRadius = 1
-        const bandWidth = 0.05
+        const bandWidth = 0.015
         const angleInc = Math.PI * 2 * numRotation / numSegment
         const radiusInc = maxRadius / numSegment
         const verts = []
         let angle = 0
         let radius = bandWidth
         for (let i = 0; i < numSegment; i++, angle += angleInc, radius += radiusInc) {
+            const { ind, coord } = texMapper.get(i / numSegment)
             const pos0 = [
                 Math.cos(angle) * (radius - bandWidth * 0.5),
                 Math.sin(angle) * (radius - bandWidth * 0.5)
             ]
+            const coord0 = [...coord]
             const pos1 = [
                 Math.cos(angle) * (radius + bandWidth * 0.5),
                 Math.sin(angle) * (radius + bandWidth * 0.5)
             ]
+            const coord1 = [
+                coord[0] + metadata.width,
+                coord[1]
+            ]
             verts.push(
                 ...pos0,
-                ...pos0, // temp tex coord
-                0, // temp tex ind
+                ...coord0, // temp tex coord
+                ind, // temp tex ind
                 ...pos1,
-                ...pos1, // temp tex coord
-                0 // temp tex ind
+                ...coord1, // temp tex coord
+                ind // temp tex ind
             )
         }
         this.numVertex = verts.length / 5

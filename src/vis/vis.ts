@@ -25,11 +25,11 @@ class Vis {
 
         this.gl = initGl(this.canvas)
 
-        this.spiral = new CoreSpiral(this.gl, images, metadata, 10, 30000)
+        this.spiral = new CoreSpiral(this.gl, images, metadata, 50, 5000)
 
         this.view = mat4.lookAt(
             mat4.create(),
-            [0, 0, 2],
+            [0, 0, 1],
             [0, 0, 0],
             [0, 1, 0]
         )

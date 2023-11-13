@@ -4,15 +4,10 @@ import type { Metadata } from './vis/vis'
 import './style.css'
 
 const main = async (): Promise<void> => {
-    const imgPromises = [
-        loadImageAsync('./data/gt1-0.png'),
-        loadImageAsync('./data/gt1-1.png')
-    ]
-    const imgs = await Promise.all(imgPromises)
-
+    const img = await loadImageAsync('./data/gt1.png')
     const metadata: Metadata = await fetch('./data/metadata.json').then(res => res.json())
 
-    const vis = new Vis(imgs, metadata)
+    const vis = new Vis(img, metadata)
 
     const tick = (): void => {
         vis.draw()

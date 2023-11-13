@@ -2,6 +2,12 @@ import { mat4 } from 'gl-matrix'
 import { initGl } from '../lib/gl-wrap'
 import CoreSpiral from '../vis/spiral'
 
+type Metadata = {
+    width: number,
+    heights: Array<number>,
+    columnBounds: Array<number>
+}
+
 const FOV = Math.PI * 0.5
 const NEAR = 0.1
 const FAR = 10
@@ -13,13 +19,13 @@ class Vis {
     proj: mat4
     spiral: CoreSpiral
 
-    constructor (images: Array<HTMLImageElement>) {
+    constructor (images: Array<HTMLImageElement>, metadata: Metadata) {
         this.canvas = document.createElement('canvas')
         document.body.appendChild(this.canvas)
 
         this.gl = initGl(this.canvas)
 
-        this.spiral = new CoreSpiral(this.gl, 30000, 10, images)
+        this.spiral = new CoreSpiral(this.gl, images, metadata, 10, 30000)
 
         this.view = mat4.lookAt(
             mat4.create(),
@@ -61,3 +67,4 @@ class Vis {
 }
 
 export default Vis
+export type { Metadata }

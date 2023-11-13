@@ -1,5 +1,6 @@
 import { mat4 } from 'gl-matrix'
 import { initProgram, initBuffer, initAttribute, initTexture, getTextureAttachments } from '../lib/gl-wrap'
+import type { Metadata } from '../vis/vis'
 import vertSource from '../shaders/spiral-vert.glsl?raw'
 import fragSource from '../shaders/spiral-frag.glsl?raw'
 
@@ -15,11 +16,13 @@ class CoreSpiral {
 
     constructor (
         gl: WebGLRenderingContext,
-        numSegment: number,
+        images: Array<HTMLImageElement>,
+        metadata: Metadata,
         numRotation: number,
-        images: Array<HTMLImageElement>
+        numSegment: number
     ) {
         this.program = initProgram(gl, vertSource, fragSource)
+        console.log(metadata)
 
         this.textures = []
         this.texAttachments = getTextureAttachments(gl)

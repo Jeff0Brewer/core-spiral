@@ -13,13 +13,13 @@ class Vis {
     proj: mat4
     spiral: CoreSpiral
 
-    constructor () {
+    constructor (images: Array<HTMLImageElement>) {
         this.canvas = document.createElement('canvas')
         document.body.appendChild(this.canvas)
 
         this.gl = initGl(this.canvas)
 
-        this.spiral = new CoreSpiral(this.gl, 30000, 10)
+        this.spiral = new CoreSpiral(this.gl, 30000, 10, images)
 
         this.view = mat4.lookAt(
             mat4.create(),

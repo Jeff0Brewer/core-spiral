@@ -119,10 +119,20 @@ const initTexture = (gl: WebGLRenderingContext): WebGLTexture => {
     return texture
 }
 
+const getTextureAttachments = (gl: WebGLRenderingContext): Array<number> => {
+    return [
+        gl.TEXTURE0,
+        gl.TEXTURE1,
+        gl.TEXTURE2,
+        gl.TEXTURE3
+    ]
+}
+
 export {
     initGl,
     initProgram,
     initBuffer,
     initAttribute,
-    initTexture
+    initTexture,
+    getTextureAttachments
 }

@@ -81,9 +81,9 @@ class CoreSpiral {
         const radiusInc = maxRadius / numSegment
         const verts = []
         let angle = 0
-        let radius = bandWidth
+        let radius = bandWidth * 5
         for (let i = 0; i < numSegment; i++, angle += angleInc, radius += radiusInc) {
-            const { ind, coord } = texMapper.get(i / numSegment)
+            const { ind, coord } = texMapper.get(Math.pow(i / numSegment, 1.5))
             const pos0 = [
                 Math.cos(angle) * (radius - bandWidth * 0.5),
                 Math.sin(angle) * (radius - bandWidth * 0.5)

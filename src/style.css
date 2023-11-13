@@ -6,13 +6,12 @@
 
 body {
     position: relative;
-    background-color: #333;
-    /* don't need mobile support currently */
-    width: 100vw;
-    height: 100vh;
+    background-color: #1f1f22;
 }
 
 canvas {
     position: absolute;
-    inset: 0;
+    /* don't need mobile support currently */
+    width: 100vw;
+    height: 100vh;
 }

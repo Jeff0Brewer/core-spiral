@@ -29,9 +29,9 @@ class Vis {
 
         this.view = mat4.lookAt(
             mat4.create(),
-            [0, 0, 1],
+            [0, 0, 1.1],
             [0, 0, 0],
-            [0, 1, 0]
+            [0, -1, 0]
         )
         this.spiral.setView(this.view)
 

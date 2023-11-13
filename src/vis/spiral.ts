@@ -76,7 +76,7 @@ class CoreSpiral {
 
         const texMapper = new TextureMapper(metadata)
         const maxRadius = 1
-        const bandWidth = 0.015
+        const bandWidth = 0.01
         const angleInc = Math.PI * 2 * numRotation / numSegment
         const radiusInc = maxRadius / numSegment
         const verts = []

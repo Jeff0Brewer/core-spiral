@@ -3,6 +3,10 @@ import { initProgram, initBuffer, initAttribute, initTexture } from '../lib/gl-w
 import vertSource from '../shaders/spiral-vert.glsl?raw'
 import fragSource from '../shaders/spiral-frag.glsl?raw'
 
+const POS_FPV = 2
+const TEX_FPV = 2
+const STRIDE = POS_FPV + TEX_FPV
+
 type ColumnTextureMetadata = {
     width: number,
     heights: Array<number>
@@ -21,58 +25,22 @@ class CoreSpiral {
         gl: WebGLRenderingContext,
         img: HTMLImageElement,
         metadata: ColumnTextureMetadata,
-        numRotation: number,
-        numSegment: number
+        numSegment: number,
+        numRotation: number
     ) {
         this.program = initProgram(gl, vertSource, fragSource)
 
-        this.texture = initTexture(gl)
-        gl.texImage2D(
-            gl.TEXTURE_2D,
-            0,
-            gl.LUMINANCE,
-            gl.LUMINANCE,
-            gl.UNSIGNED_BYTE,
-            img
-        )
-
-        const texMapper = new TextureMapper(metadata)
-        const maxRadius = 1
-        const bandWidth = 0.01
-        const angleInc = Math.PI * 2 * numRotation / numSegment
-        const radiusInc = maxRadius / numSegment
-        const verts = []
-        let angle = 0
-        let radius = bandWidth * 5
-        for (let i = 0; i < numSegment; i++, angle += angleInc, radius += radiusInc) {
-            const coord = texMapper.get(Math.pow(i / numSegment, 1.5))
-            const pos0 = [
-                Math.cos(angle) * (radius - bandWidth * 0.5),
-                Math.sin(angle) * (radius - bandWidth * 0.5)
-            ]
-            const coord0 = [...coord]
-            const pos1 = [
-                Math.cos(angle) * (radius + bandWidth * 0.5),
-                Math.sin(angle) * (radius + bandWidth * 0.5)
-            ]
-            const coord1 = [
-                coord[0] + metadata.width,
-                coord[1]
-            ]
-            verts.push(
-                ...pos0,
-                ...coord0,
-                ...pos1,
-                ...coord1
-            )
-        }
-        this.numVertex = verts.length / 4
+        const verts = getSpiralVerts(metadata, numSegment, numRotation)
+        this.numVertex = verts.length / STRIDE
 
         this.buffer = initBuffer(gl)
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW)
+        gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW)
 
-        const bindPosition = initAttribute(gl, this.program, 'position', 2, 4, 0, gl.FLOAT)
-        const bindTexCoord = initAttribute(gl, this.program, 'texCoord', 2, 4, 2, gl.FLOAT)
+        this.texture = initTexture(gl)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, img)
+
+        const bindPosition = initAttribute(gl, this.program, 'position', POS_FPV, STRIDE, 0, gl.FLOAT)
+        const bindTexCoord = initAttribute(gl, this.program, 'texCoord', TEX_FPV, STRIDE, POS_FPV, gl.FLOAT)
         this.bindAttrib = (): void => {
             bindPosition()
             bindTexCoord()
@@ -130,6 +98,39 @@ class TextureMapper {
         const y = (this.columnHeights[colInd] - (colTotal - tHeight))
         return [x, y]
     }
+}
+
+const getSpiralVerts = (
+    metadata: ColumnTextureMetadata,
+    numSegment: number,
+    numRotation: number
+): Float32Array => {
+    const bandWidth = 0.01
+    const radiusInc = 1 / numSegment
+    const angleInc = Math.PI * 2 * numRotation / numSegment
+    const texMapper = new TextureMapper(metadata)
+
+    const verts = []
+    let angle = 0
+    let radius = bandWidth * 5
+    for (let i = 0; i < numSegment; i++, angle += angleInc, radius += radiusInc) {
+        const innerRadius = (radius - bandWidth * 0.5)
+        const outerRadius = (radius + bandWidth * 0.5)
+
+        const innerCoord = texMapper.get(Math.pow(i / numSegment, 1.5))
+        const outerCoord = [innerCoord[0] + metadata.width, innerCoord[1]]
+
+        verts.push(
+            Math.cos(angle) * innerRadius,
+            Math.sin(angle) * innerRadius,
+            ...innerCoord,
+            Math.cos(angle) * outerRadius,
+            Math.sin(angle) * outerRadius,
+            ...outerCoord
+        )
+    }
+
+    return new Float32Array(verts)
 }
 
 export default CoreSpiral

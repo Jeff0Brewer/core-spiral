@@ -6,13 +6,11 @@ import fragSource from '../shaders/spiral-frag.glsl?raw'
 
 class TextureMapper {
     columnWidth: number
-    columnBounds: Array<number>
     columnHeights: Array<number>
     totalHeight: number
 
     constructor (metadata: Metadata) {
         this.columnWidth = metadata.width
-        this.columnBounds = metadata.columnBounds
         this.columnHeights = metadata.heights
         this.totalHeight = this.columnHeights.reduce(
             (total: number, curr: number) => total + curr,

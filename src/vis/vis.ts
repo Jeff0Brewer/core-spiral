@@ -4,8 +4,7 @@ import CoreSpiral from '../vis/spiral'
 
 type Metadata = {
     width: number,
-    heights: Array<number>,
-    columnBounds: Array<number>
+    heights: Array<number>
 }
 
 const FOV = Math.PI * 0.5

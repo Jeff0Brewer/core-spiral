@@ -1,11 +1,12 @@
 import { mat4 } from 'gl-matrix'
 import { initGl } from '../lib/gl-wrap'
 import CoreSpiral, { ColumnTextureMetadata } from '../vis/spiral'
+import Camera2D from '../lib/camera'
 
 class Vis {
     canvas: HTMLCanvasElement
     gl: WebGLRenderingContext
-    view: mat4
+    camera: Camera2D
     proj: mat4
     spiral: CoreSpiral
 
@@ -15,15 +16,10 @@ class Vis {
 
         this.gl = initGl(this.canvas)
 
-        this.spiral = new CoreSpiral(this.gl, img, metadata, 5000, 75)
+        this.spiral = new CoreSpiral(this.gl, img, metadata, 10000, 75)
 
-        this.view = mat4.lookAt(
-            mat4.create(),
-            [0, 0, 1],
-            [0, 0, 0],
-            [0, -1, 0]
-        )
-        this.spiral.setView(this.view)
+        this.camera = new Camera2D([0, 0, 1], [0, 0, 0], [0, -1, 0])
+        this.spiral.setView(this.camera.matrix)
 
         this.proj = mat4.create()
 
@@ -46,6 +42,7 @@ class Vis {
     draw (): void {
         this.gl.clear(this.gl.DEPTH_BUFFER_BIT || this.gl.COLOR_BUFFER_BIT)
 
+        this.spiral.setView(this.camera.matrix)
         this.spiral.draw(this.gl)
     }
 }

@@ -3,40 +3,9 @@ import { initProgram, initBuffer, initAttribute, initTexture } from '../lib/gl-w
 import vertSource from '../shaders/spiral-vert.glsl?raw'
 import fragSource from '../shaders/spiral-frag.glsl?raw'
 
-type SpiralMetadata = {
+type ColumnTextureMetadata = {
     width: number,
     heights: Array<number>
-}
-
-class TextureMapper {
-    columnWidth: number
-    columnHeights: Array<number>
-    totalHeight: number
-
-    constructor (metadata: SpiralMetadata) {
-        this.columnWidth = metadata.width
-        this.columnHeights = metadata.heights
-        this.totalHeight = this.columnHeights.reduce(
-            (total: number, curr: number) => total + curr,
-            0
-        )
-    }
-
-    get (t: number): [number, number] {
-        const tHeight = t * this.totalHeight
-
-        let colInd = 0
-        let colTotal = this.columnHeights[0]
-        while (colTotal < tHeight) {
-            colInd++
-            colTotal += this.columnHeights[colInd]
-        }
-
-        return [
-            (colInd * this.columnWidth) % 1,
-            (this.columnHeights[colInd] - (colTotal - tHeight))
-        ]
-    }
 }
 
 class CoreSpiral {
@@ -51,7 +20,7 @@ class CoreSpiral {
     constructor (
         gl: WebGLRenderingContext,
         img: HTMLImageElement,
-        metadata: SpiralMetadata,
+        metadata: ColumnTextureMetadata,
         numRotation: number,
         numSegment: number
     ) {
@@ -132,5 +101,36 @@ class CoreSpiral {
     }
 }
 
+// helper for mapping texture with columns of data
+// to continuous strip
+class TextureMapper {
+    columnWidth: number
+    columnHeights: Array<number>
+    totalHeight: number
+
+    constructor (metadata: ColumnTextureMetadata) {
+        this.columnWidth = metadata.width
+        this.columnHeights = metadata.heights
+
+        const sum = (a: number, b: number): number => a + b
+        this.totalHeight = this.columnHeights.reduce(sum, 0)
+    }
+
+    get (t: number): [number, number] {
+        const tHeight = t * this.totalHeight
+
+        let colInd = 0
+        let colTotal = this.columnHeights[0]
+        while (colTotal < tHeight) {
+            colInd++
+            colTotal += this.columnHeights[colInd]
+        }
+
+        const x = (colInd * this.columnWidth) % 1
+        const y = (this.columnHeights[colInd] - (colTotal - tHeight))
+        return [x, y]
+    }
+}
+
 export default CoreSpiral
-export type { SpiralMetadata }
+export type { ColumnTextureMetadata }

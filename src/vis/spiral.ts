@@ -1,15 +1,19 @@
 import { mat4 } from 'gl-matrix'
 import { initProgram, initBuffer, initAttribute, initTexture } from '../lib/gl-wrap'
-import type { Metadata } from '../vis/vis'
 import vertSource from '../shaders/spiral-vert.glsl?raw'
 import fragSource from '../shaders/spiral-frag.glsl?raw'
+
+type SpiralMetadata = {
+    width: number,
+    heights: Array<number>
+}
 
 class TextureMapper {
     columnWidth: number
     columnHeights: Array<number>
     totalHeight: number
 
-    constructor (metadata: Metadata) {
+    constructor (metadata: SpiralMetadata) {
         this.columnWidth = metadata.width
         this.columnHeights = metadata.heights
         this.totalHeight = this.columnHeights.reduce(
@@ -47,7 +51,7 @@ class CoreSpiral {
     constructor (
         gl: WebGLRenderingContext,
         img: HTMLImageElement,
-        metadata: Metadata,
+        metadata: SpiralMetadata,
         numRotation: number,
         numSegment: number
     ) {
@@ -129,3 +133,4 @@ class CoreSpiral {
 }
 
 export default CoreSpiral
+export type { SpiralMetadata }

@@ -73,29 +73,34 @@ class CoreSpiral {
 // to continuous strip
 class TextureMapper {
     columnWidth: number
-    columnHeights: Array<number>
+    heightSearch: Array<number>
     totalHeight: number
 
     constructor (metadata: ColumnTextureMetadata) {
         this.columnWidth = metadata.width
-        this.columnHeights = metadata.heights
 
-        const sum = (a: number, b: number): number => a + b
-        this.totalHeight = this.columnHeights.reduce(sum, 0)
+        // get total height and list of height sums for index search
+        this.totalHeight = 0
+        this.heightSearch = [0, ...metadata.heights].map(v => {
+            this.totalHeight += v
+            return this.totalHeight
+        })
+    }
+
+    getColInd (height: number): number {
+        let colInd = 0
+        while (this.heightSearch[colInd + 1] < height) {
+            colInd++
+        }
+        return colInd
     }
 
     get (t: number): [number, number] {
         const tHeight = t * this.totalHeight
+        const colInd = this.getColInd(tHeight)
 
-        let colInd = 0
-        let colTotal = this.columnHeights[0]
-        while (colTotal < tHeight) {
-            colInd++
-            colTotal += this.columnHeights[colInd]
-        }
-
-        const x = (colInd * this.columnWidth) % 1
-        const y = (this.columnHeights[colInd] - (colTotal - tHeight))
+        const x = colInd * this.columnWidth
+        const y = tHeight - this.heightSearch[colInd]
         return [x, y]
     }
 }

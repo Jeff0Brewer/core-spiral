@@ -88,6 +88,7 @@ class TextureMapper {
     }
 
     getColInd (height: number): number {
+        // could do binary search but this is fine for now
         let colInd = 0
         while (this.heightSearch[colInd] < height) {
             colInd++
@@ -95,20 +96,24 @@ class TextureMapper {
         return colInd
     }
 
-    get (t: number, nextT: number): { coord: [number, number], breakPercentage: number | null } {
+    get (t: number, nextT?: number): {
+        coord: [number, number], breakPercentage: number | null
+    } {
         const tHeight = t * this.totalHeight
         const colInd = this.getColInd(tHeight)
 
-        const nextTHeight = nextT * this.totalHeight
-        const nextColInd = this.getColInd(nextTHeight)
-
-        // if columns change in current segment get value indicating
-        // where column change happens so extra verts can be
-        // added to prevent texture mapping errors
         let breakPercentage = null
-        if (colInd !== nextColInd) {
-            const breakT = this.heightSearch[colInd] / this.totalHeight
-            breakPercentage = (breakT - t) / (nextT - t)
+        if (nextT !== undefined) {
+            const nextTHeight = nextT * this.totalHeight
+            const nextColInd = this.getColInd(nextTHeight)
+
+            // if columns change in current segment get value indicating
+            // where column change happens so extra verts can be
+            // added to prevent texture mapping errors
+            if (colInd !== nextColInd) {
+                const breakT = this.heightSearch[colInd] / this.totalHeight
+                breakPercentage = (breakT - t) / (nextT - t)
+            }
         }
 
         const x = colInd * this.columnWidth
@@ -124,44 +129,46 @@ const getSpiralVerts = (
 ): Float32Array => {
     const bandWidth = 0.01
     const radiusInc = 1 / numSegment
-    const angleInc = Math.PI * 2 * numRotation / numSegment
     const texMapper = new TextureMapper(metadata)
     const breakEpsilon = 0.000001
 
+    const maxAngle = Math.PI * 2 * numRotation
+    const maxRadius = 1
+    const minRadius = bandWidth * 5
+
     const verts: Array<number> = []
-    const addSpiralStep = (angle: number, radius: number, coord: [number, number]): void => {
-        const ir = radius - bandWidth * 0.5
-        const or = radius + bandWidth * 0.5
+    const addSpiralStep = (segmentInd: number, coord: [number, number]): void => {
+        const segmentT = segmentInd / numSegment
+        const angle = maxAngle * segmentT
+        const radius = (maxRadius - minRadius) * segmentT + minRadius
         verts.push(
-            Math.cos(angle) * ir,
-            Math.sin(angle) * ir,
+            Math.cos(angle) * (radius - bandWidth * 0.5),
+            Math.sin(angle) * (radius - bandWidth * 0.5),
             coord[0],
             coord[1],
-            Math.cos(angle) * or,
-            Math.sin(angle) * or,
+            Math.cos(angle) * (radius + bandWidth * 0.5),
+            Math.sin(angle) * (radius + bandWidth * 0.5),
             coord[0] + metadata.width,
             coord[1]
         )
     }
 
-    let angle = 0
     let radius = bandWidth * 5
-    for (let i = 0; i < numSegment; i++, angle += angleInc, radius += radiusInc) {
+    for (let i = 0; i < numSegment; i++, radius += radiusInc) {
         const thisT = Math.pow(i / numSegment, 1.5)
         const nextT = Math.pow((i + 1) / numSegment, 1.5)
         const { coord, breakPercentage } = texMapper.get(thisT, nextT)
-        addSpiralStep(angle, radius, coord)
+        addSpiralStep(i, coord)
 
         if (breakPercentage !== null) {
-            const breakAngle = angle + angleInc * breakPercentage
-            const breakRadius = radius + radiusInc * breakPercentage
-
             const breakT = thisT * (1 - breakPercentage) + nextT * breakPercentage
-            const { coord: lowCoord } = texMapper.get(breakT - breakEpsilon, 0)
-            const { coord: highCoord } = texMapper.get(breakT + breakEpsilon, 0)
+            const { coord: lowCoord } = texMapper.get(breakT - breakEpsilon)
+            const { coord: highCoord } = texMapper.get(breakT + breakEpsilon)
 
-            addSpiralStep(breakAngle, breakRadius, lowCoord)
-            addSpiralStep(breakAngle, breakRadius, highCoord)
+            // add two sets of verts at same position with slightly different
+            // texture coords so interpolation between end / start of columns doesn't break
+            addSpiralStep(i + breakPercentage, lowCoord)
+            addSpiralStep(i + breakPercentage, highCoord)
         }
     }
 

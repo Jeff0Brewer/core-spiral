@@ -5,7 +5,7 @@ import fragSource from '../shaders/spiral-frag.glsl?raw'
 
 const POS_FPV = 2
 const TEX_FPV = 2
-const STRIDE = POS_FPV + TEX_FPV
+const STRIDE = 2 * POS_FPV + TEX_FPV
 
 type ColumnTextureMetadata = {
     width: number,
@@ -39,10 +39,12 @@ class CoreSpiral {
         this.texture = initTexture(gl)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, img)
 
-        const bindPosition = initAttribute(gl, this.program, 'position', POS_FPV, STRIDE, 0, gl.FLOAT)
-        const bindTexCoord = initAttribute(gl, this.program, 'texCoord', TEX_FPV, STRIDE, POS_FPV, gl.FLOAT)
+        const bindSpiralPos = initAttribute(gl, this.program, 'spiralPos', POS_FPV, STRIDE, 0, gl.FLOAT)
+        const bindLinearPos = initAttribute(gl, this.program, 'linearPos', POS_FPV, STRIDE, POS_FPV, gl.FLOAT)
+        const bindTexCoord = initAttribute(gl, this.program, 'texCoord', TEX_FPV, STRIDE, 2 * POS_FPV, gl.FLOAT)
         this.bindAttrib = (): void => {
-            bindPosition()
+            bindSpiralPos()
+            bindLinearPos()
             bindTexCoord()
         }
 
@@ -144,10 +146,12 @@ const getSpiralVerts = (
         verts.push(
             Math.cos(angle) * (radius - bandWidth * 0.5),
             Math.sin(angle) * (radius - bandWidth * 0.5),
+            0, 0, // temp
             coord[0],
             coord[1],
             Math.cos(angle) * (radius + bandWidth * 0.5),
             Math.sin(angle) * (radius + bandWidth * 0.5),
+            0, 0, // temp
             coord[0] + metadata.width,
             coord[1]
         )

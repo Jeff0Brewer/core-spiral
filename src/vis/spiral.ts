@@ -89,19 +89,31 @@ class TextureMapper {
 
     getColInd (height: number): number {
         let colInd = 0
-        while (this.heightSearch[colInd + 1] < height) {
+        while (this.heightSearch[colInd] < height) {
             colInd++
         }
         return colInd
     }
 
-    get (t: number): [number, number] {
+    get (t: number, nextT: number): { coord: [number, number], breakPercentage: number | null } {
         const tHeight = t * this.totalHeight
         const colInd = this.getColInd(tHeight)
 
+        const nextTHeight = nextT * this.totalHeight
+        const nextColInd = this.getColInd(nextTHeight)
+
+        // if columns change in current segment get value indicating
+        // where column change happens so extra verts can be
+        // added to prevent texture mapping errors
+        let breakPercentage = null
+        if (colInd !== nextColInd) {
+            const breakT = this.heightSearch[colInd] / this.totalHeight
+            breakPercentage = (breakT - t) / (nextT - t)
+        }
+
         const x = colInd * this.columnWidth
-        const y = tHeight - this.heightSearch[colInd]
-        return [x, y]
+        const y = tHeight - this.heightSearch[colInd - 1]
+        return { coord: [x, y], breakPercentage }
     }
 }
 
@@ -114,25 +126,43 @@ const getSpiralVerts = (
     const radiusInc = 1 / numSegment
     const angleInc = Math.PI * 2 * numRotation / numSegment
     const texMapper = new TextureMapper(metadata)
+    const breakEpsilon = 0.000001
 
-    const verts = []
+    const verts: Array<number> = []
+    const addSpiralStep = (angle: number, radius: number, coord: [number, number]): void => {
+        const ir = radius - bandWidth * 0.5
+        const or = radius + bandWidth * 0.5
+        verts.push(
+            Math.cos(angle) * ir,
+            Math.sin(angle) * ir,
+            coord[0],
+            coord[1],
+            Math.cos(angle) * or,
+            Math.sin(angle) * or,
+            coord[0] + metadata.width,
+            coord[1]
+        )
+    }
+
     let angle = 0
     let radius = bandWidth * 5
     for (let i = 0; i < numSegment; i++, angle += angleInc, radius += radiusInc) {
-        const innerRadius = (radius - bandWidth * 0.5)
-        const outerRadius = (radius + bandWidth * 0.5)
+        const thisT = Math.pow(i / numSegment, 1.5)
+        const nextT = Math.pow((i + 1) / numSegment, 1.5)
+        const { coord, breakPercentage } = texMapper.get(thisT, nextT)
+        addSpiralStep(angle, radius, coord)
 
-        const innerCoord = texMapper.get(Math.pow(i / numSegment, 1.5))
-        const outerCoord = [innerCoord[0] + metadata.width, innerCoord[1]]
+        if (breakPercentage !== null) {
+            const breakAngle = angle + angleInc * breakPercentage
+            const breakRadius = radius + radiusInc * breakPercentage
 
-        verts.push(
-            Math.cos(angle) * innerRadius,
-            Math.sin(angle) * innerRadius,
-            ...innerCoord,
-            Math.cos(angle) * outerRadius,
-            Math.sin(angle) * outerRadius,
-            ...outerCoord
-        )
+            const breakT = thisT * (1 - breakPercentage) + nextT * breakPercentage
+            const { coord: lowCoord } = texMapper.get(breakT - breakEpsilon, 0)
+            const { coord: highCoord } = texMapper.get(breakT + breakEpsilon, 0)
+
+            addSpiralStep(breakAngle, breakRadius, lowCoord)
+            addSpiralStep(breakAngle, breakRadius, highCoord)
+        }
     }
 
     return new Float32Array(verts)

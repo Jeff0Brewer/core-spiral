@@ -32,7 +32,7 @@ class Vis {
 
             this.gl.viewport(0, 0, w, h)
 
-            mat4.perspective(this.proj, Math.PI * 0.5, w / h, 0.1, 10)
+            mat4.perspective(this.proj, Math.PI * 0.5, w / h, 0.01, 6)
             this.spiral.setProj(this.proj)
         }
         resize() // init canvas size / proj matrix / gl viewport

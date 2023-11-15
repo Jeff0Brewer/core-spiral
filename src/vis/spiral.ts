@@ -19,6 +19,9 @@ class CoreSpiral {
     bindAttrib: () => void
     setProj: (m: mat4) => void
     setView: (m: mat4) => void
+    setWarpT: (v: number) => void
+    currWarpT: number
+    targetWarpT: number
     numVertex: number
 
     constructor (
@@ -50,6 +53,7 @@ class CoreSpiral {
 
         const projLoc = gl.getUniformLocation(this.program, 'proj')
         const viewLoc = gl.getUniformLocation(this.program, 'view')
+        const warpTLoc = gl.getUniformLocation(this.program, 'warpT')
         this.setProj = (m: mat4): void => {
             gl.useProgram(this.program)
             gl.uniformMatrix4fv(projLoc, false, m)
@@ -58,6 +62,17 @@ class CoreSpiral {
             gl.useProgram(this.program)
             gl.uniformMatrix4fv(viewLoc, false, m)
         }
+        this.setWarpT = (v: number): void => {
+            gl.uniform1f(warpTLoc, v)
+        }
+
+        this.currWarpT = 0
+        this.targetWarpT = 0
+        window.addEventListener('keydown', e => {
+            if (e.key === ' ') {
+                this.targetWarpT = this.targetWarpT === 0 ? 1 : 0
+            }
+        })
     }
 
     draw (gl: WebGLRenderingContext): void {
@@ -66,6 +81,9 @@ class CoreSpiral {
         gl.bindTexture(gl.TEXTURE_2D, this.texture)
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer)
         this.bindAttrib()
+
+        this.currWarpT = this.currWarpT * 0.9 + this.targetWarpT * 0.1
+        this.setWarpT(this.currWarpT)
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.numVertex)
     }
@@ -137,21 +155,25 @@ const getSpiralVerts = (
     const maxAngle = Math.PI * 2 * numRotation
     const maxRadius = 1
     const minRadius = bandWidth * 5
+    const linearHeight = 500
 
     const verts: Array<number> = []
     const addSpiralStep = (segmentInd: number, coord: [number, number]): void => {
         const segmentT = segmentInd / numSegment
         const angle = maxAngle * segmentT
         const radius = (maxRadius - minRadius) * segmentT + minRadius
+        const linearY = segmentT * linearHeight - linearHeight * 0.5
         verts.push(
             Math.cos(angle) * (radius - bandWidth * 0.5),
             Math.sin(angle) * (radius - bandWidth * 0.5),
-            0, 0, // temp
+            -bandWidth * 0.5,
+            linearY,
             coord[0],
             coord[1],
             Math.cos(angle) * (radius + bandWidth * 0.5),
             Math.sin(angle) * (radius + bandWidth * 0.5),
-            0, 0, // temp
+            bandWidth * 0.5,
+            linearY,
             coord[0] + metadata.width,
             coord[1]
         )

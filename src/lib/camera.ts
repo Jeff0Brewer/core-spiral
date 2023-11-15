@@ -3,7 +3,7 @@ import { mat4, vec3 } from 'gl-matrix'
 const PAN_SPEED = 0.001
 const ZOOM_SPEED = 0.0005
 const MAX_ZOOM = 5
-const MIN_ZOOM = 0.1
+const MIN_ZOOM = 0.01
 
 class Camera2D {
     matrix: mat4

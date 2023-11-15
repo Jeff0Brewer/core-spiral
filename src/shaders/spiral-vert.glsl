@@ -4,13 +4,12 @@ attribute vec2 texCoord;
 
 uniform mat4 proj;
 uniform mat4 view;
+uniform float warpT;
 
 varying vec2 vTexCoord;
 
 void main() {
-    if (linearPos.x != 0.0) { // so compiler doesn't remove linearPos attrib
-        gl_Position = spiralPos;
-    }
-    gl_Position = proj * view * spiralPos;
+    vec4 position = (linearPos * warpT + spiralPos * (1.0 - warpT));
+    gl_Position = proj * view * position;
     vTexCoord = texCoord;
 }

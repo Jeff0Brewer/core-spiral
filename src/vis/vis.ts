@@ -16,9 +16,8 @@ class Vis {
 
         this.gl = initGl(this.canvas)
 
-        this.spiral = new CoreSpiral(this.gl, imgs, metadata, 10000, 30)
-
         this.camera = new Camera2D([0, 0, 1], [0, 0, 0], [0, -1, 0], this.canvas)
+        this.spiral = new CoreSpiral(this.gl, imgs, metadata, 10000, 30, this.camera.reset)
         this.spiral.setView(this.camera.matrix)
 
         this.proj = mat4.create()
@@ -40,6 +39,7 @@ class Vis {
     }
 
     draw (): void {
+        this.camera.update()
         this.gl.clear(this.gl.DEPTH_BUFFER_BIT || this.gl.COLOR_BUFFER_BIT)
 
         this.spiral.setView(this.camera.matrix)

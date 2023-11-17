@@ -15,6 +15,8 @@ class Camera2D {
     currUp: vec3
     currZoom: number
     dragging: boolean
+    resetting: boolean
+    reset: () => void
 
     constructor (eye: vec3, focus: vec3, up: vec3, element: HTMLElement) {
         this.matrix = mat4.create()
@@ -33,9 +35,15 @@ class Camera2D {
         this.currZoom = vec3.length(vec3.subtract(vec3.create(), this.currEye, this.currFocus))
 
         this.dragging = false
+        this.resetting = false
 
-        element.addEventListener('mousedown', () => { this.dragging = true })
-        element.addEventListener('mouseup', () => { this.dragging = false })
+        element.addEventListener('mousedown', () => {
+            this.dragging = true
+            this.resetting = false
+        })
+        element.addEventListener('mouseup', () => {
+            this.dragging = false
+        })
         element.addEventListener('mousemove', e => {
             if (this.dragging) {
                 this.pan(e.movementX, -e.movementY)
@@ -43,8 +51,24 @@ class Camera2D {
         })
 
         element.addEventListener('wheel', e => {
+            this.resetting = false
             this.zoom(e.deltaY)
         })
+
+        this.reset = (): void => {
+            this.resetting = true
+        }
+    }
+
+    update (): void {
+        if (this.resetting) {
+            vec3.lerp(this.currEye, this.currEye, this.defaultEye, 0.1)
+            vec3.lerp(this.currFocus, this.currFocus, this.defaultFocus, 0.1)
+            vec3.lerp(this.currUp, this.currUp, this.defaultUp, 0.1)
+
+            this.currZoom = vec3.length(vec3.subtract(vec3.create(), this.currEye, this.currFocus))
+            mat4.lookAt(this.matrix, this.currEye, this.currFocus, this.currUp)
+        }
     }
 
     zoom (delta: number): void {

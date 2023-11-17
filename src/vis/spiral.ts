@@ -30,7 +30,8 @@ class CoreSpiral {
         imgs: Array<HTMLImageElement>,
         metadata: ColumnTextureMetadata,
         numSegment: number,
-        numRotation: number
+        numRotation: number,
+        resetCamera: () => void
     ) {
         this.program = initProgram(gl, vertSource, fragSource)
 
@@ -111,7 +112,12 @@ class CoreSpiral {
         this.targetWarpT = 0
         window.addEventListener('keydown', e => {
             if (e.key === ' ') {
-                this.targetWarpT = this.targetWarpT === 0 ? 1 : 0
+                if (this.targetWarpT === 0) {
+                    this.targetWarpT = 1
+                } else {
+                    this.targetWarpT = 0
+                    resetCamera()
+                }
             }
         })
     }

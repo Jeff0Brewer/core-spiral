@@ -15,7 +15,8 @@ type ColumnTextureMetadata = {
 class CoreSpiral {
     program: WebGLProgram
     buffer: WebGLBuffer
-    texture: WebGLTexture
+    textures: Array<WebGLTexture>
+    texAttachments: Array<number>
     bindAttrib: () => void
     setProj: (m: mat4) => void
     setView: (m: mat4) => void
@@ -26,7 +27,7 @@ class CoreSpiral {
 
     constructor (
         gl: WebGLRenderingContext,
-        img: HTMLImageElement,
+        imgs: Array<HTMLImageElement>,
         metadata: ColumnTextureMetadata,
         numSegment: number,
         numRotation: number
@@ -39,8 +40,42 @@ class CoreSpiral {
         this.buffer = initBuffer(gl)
         gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW)
 
-        this.texture = initTexture(gl)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, img)
+        const colors = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [0.5, 0.5, 0],
+            [0, 0.5, 0.5],
+            [0.5, 0, 0.5],
+            [0.2, 0.2, 0.2]
+        ]
+
+        this.texAttachments = [
+            gl.TEXTURE0,
+            gl.TEXTURE1,
+            gl.TEXTURE2,
+            gl.TEXTURE3,
+            gl.TEXTURE4,
+            gl.TEXTURE5,
+            gl.TEXTURE6
+        ]
+        this.textures = []
+        for (let i = 0; i < imgs.length; i++) {
+            gl.activeTexture(this.texAttachments[i])
+
+            const texture = initTexture(gl)
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, imgs[i])
+            this.textures.push(texture)
+
+            const texLoc = gl.getUniformLocation(this.program, `mineral${i}`)
+            gl.uniform1i(texLoc, i)
+
+            const colorLoc = gl.getUniformLocation(this.program, `color${i}`)
+            gl.uniform3fv(colorLoc, colors[i])
+
+            const magLoc = gl.getUniformLocation(this.program, `mag${i}`)
+            gl.uniform1f(magLoc, 0.5)
+        }
 
         const bindSpiralPos = initAttribute(gl, this.program, 'spiralPos', POS_FPV, STRIDE, 0, gl.FLOAT)
         const bindLinearPos = initAttribute(gl, this.program, 'linearPos', POS_FPV, STRIDE, POS_FPV, gl.FLOAT)
@@ -78,7 +113,10 @@ class CoreSpiral {
     draw (gl: WebGLRenderingContext): void {
         gl.useProgram(this.program)
 
-        gl.bindTexture(gl.TEXTURE_2D, this.texture)
+        for (let i = 0; i < this.textures.length; i++) {
+            gl.activeTexture(this.texAttachments[i])
+            gl.bindTexture(gl.TEXTURE_2D, this.textures[i])
+        }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer)
         this.bindAttrib()
 
@@ -147,7 +185,7 @@ const getSpiralVerts = (
     numSegment: number,
     numRotation: number
 ): Float32Array => {
-    const bandWidth = 0.01
+    const bandWidth = 0.025
     const radiusInc = 1 / numSegment
     const texMapper = new TextureMapper(metadata)
     const breakEpsilon = 0.000001
@@ -155,7 +193,7 @@ const getSpiralVerts = (
     const maxAngle = Math.PI * 2 * numRotation
     const maxRadius = 1
     const minRadius = bandWidth * 5
-    const linearHeight = 500
+    const linearHeight = 200
 
     const verts: Array<number> = []
     const addSpiralStep = (segmentInd: number, coord: [number, number]): void => {

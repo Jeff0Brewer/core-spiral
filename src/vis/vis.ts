@@ -10,13 +10,13 @@ class Vis {
     proj: mat4
     spiral: CoreSpiral
 
-    constructor (img: HTMLImageElement, metadata: ColumnTextureMetadata) {
+    constructor (imgs: Array<HTMLImageElement>, metadata: ColumnTextureMetadata) {
         this.canvas = document.createElement('canvas')
         document.body.appendChild(this.canvas)
 
         this.gl = initGl(this.canvas)
 
-        this.spiral = new CoreSpiral(this.gl, img, metadata, 10000, 75)
+        this.spiral = new CoreSpiral(this.gl, imgs, metadata, 10000, 30)
 
         this.camera = new Camera2D([0, 0, 1], [0, 0, 0], [0, -1, 0])
         this.spiral.setView(this.camera.matrix)

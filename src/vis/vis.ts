@@ -18,7 +18,7 @@ class Vis {
 
         this.spiral = new CoreSpiral(this.gl, imgs, metadata, 10000, 30)
 
-        this.camera = new Camera2D([0, 0, 1], [0, 0, 0], [0, -1, 0])
+        this.camera = new Camera2D([0, 0, 1], [0, 0, 0], [0, -1, 0], this.canvas)
         this.spiral.setView(this.camera.matrix)
 
         this.proj = mat4.create()

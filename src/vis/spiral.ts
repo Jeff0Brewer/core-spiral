@@ -47,7 +47,7 @@ class CoreSpiral {
             [0.5, 0.5, 0],
             [0, 0.5, 0.5],
             [0.5, 0, 0.5],
-            [0.2, 0.2, 0.2]
+            [0.8, 0.8, 0.8]
         ]
 
         this.texAttachments = [
@@ -60,6 +60,7 @@ class CoreSpiral {
             gl.TEXTURE6
         ]
         this.textures = []
+        const magSetters = []
         for (let i = 0; i < imgs.length; i++) {
             gl.activeTexture(this.texAttachments[i])
 
@@ -75,7 +76,12 @@ class CoreSpiral {
 
             const magLoc = gl.getUniformLocation(this.program, `mag${i}`)
             gl.uniform1f(magLoc, 0.5)
+            magSetters.push((m: number) => {
+                gl.uniform1f(magLoc, m)
+            })
         }
+
+        getSpiralDom(magSetters)
 
         const bindSpiralPos = initAttribute(gl, this.program, 'spiralPos', POS_FPV, STRIDE, 0, gl.FLOAT)
         const bindLinearPos = initAttribute(gl, this.program, 'linearPos', POS_FPV, STRIDE, POS_FPV, gl.FLOAT)
@@ -237,6 +243,25 @@ const getSpiralVerts = (
     }
 
     return new Float32Array(verts)
+}
+
+const getSpiralDom = (setMags: Array<(m: number) => void>): void => {
+    const wrap = document.createElement('div')
+    wrap.classList.add('color-mix')
+    for (let i = 0; i < setMags.length; i++) {
+        const slider = document.createElement('input')
+        slider.setAttribute('type', 'range')
+        slider.min = '0'
+        slider.max = '1'
+        slider.step = '0.05'
+        slider.value = '0.5'
+        slider.addEventListener('input', () => {
+            setMags[i](parseFloat(slider.value))
+        })
+        wrap.appendChild(slider)
+    }
+
+    document.body.appendChild(wrap)
 }
 
 export default CoreSpiral

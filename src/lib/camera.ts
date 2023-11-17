@@ -16,7 +16,7 @@ class Camera2D {
     currZoom: number
     dragging: boolean
 
-    constructor (eye: vec3, focus: vec3, up: vec3) {
+    constructor (eye: vec3, focus: vec3, up: vec3, element: HTMLElement) {
         this.matrix = mat4.create()
         mat4.lookAt(this.matrix, eye, focus, up)
 
@@ -34,15 +34,15 @@ class Camera2D {
 
         this.dragging = false
 
-        window.addEventListener('mousedown', () => { this.dragging = true })
-        window.addEventListener('mouseup', () => { this.dragging = false })
-        window.addEventListener('mousemove', e => {
+        element.addEventListener('mousedown', () => { this.dragging = true })
+        element.addEventListener('mouseup', () => { this.dragging = false })
+        element.addEventListener('mousemove', e => {
             if (this.dragging) {
                 this.pan(e.movementX, -e.movementY)
             }
         })
 
-        window.addEventListener('wheel', e => {
+        element.addEventListener('wheel', e => {
             this.zoom(e.deltaY)
         })
     }
